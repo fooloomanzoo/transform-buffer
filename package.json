@@ -1,0 +1,11 @@
+{
+  "name": "transform-buffer",
+  "version": "0.1.0",
+  "description": "Creating Sequences of Data from Buffers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Johannes Brautzsch",
+  "license": "MIT"
+}
