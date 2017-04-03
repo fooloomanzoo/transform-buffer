@@ -1,13 +1,7 @@
 {
-<<<<<<< HEAD
-  "name": "buffer-view",
-  "version": "1.0.0",
-  "description": "Encoding and Decoding Sequences in Buffers",
-=======
   "name": "transform-buffer",
   "version": "0.1.0",
-  "description": "Creating Sequences of Data from Buffers",
->>>>>>> origin/master
+  "description": "Encoding and Decoding Sequences in Buffers",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

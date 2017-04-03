@@ -128,36 +128,36 @@ class BufferView {
     }.bind(this);
   }
 
-  toArray(...args) {
-    if (args[0].length && typeof args[0] === 'string') {
-      return this.stringToArray(...args);
-    } else if (Array.isArray(args[0])) {
-      return this.arrayToArray(...args);
+  toArray() {
+    if (arguments[0].length && typeof arguments[0] === 'string') {
+      return this.stringToArray(...arguments);
+    } else if (Array.isArray(arguments[0])) {
+      return this.arrayToArray(...arguments);
     }
-    if (args[0].byteLength) {
-      return this.bufferToArray(...args);
-    }
-  }
-
-  toBuffer(...args) {
-    if (args[0].length && typeof args[0] === 'string') {
-      return this.stringToBuffer(...args);
-    } else if (Array.isArray(args[0])) {
-      return this.arrayToBuffer(...args);
-    }
-    if (args[0].byteLength) {
-      return this.bufferToBuffer(...args);
+    if (arguments[0].byteLength) {
+      return this.bufferToArray(...arguments);
     }
   }
 
-  toString(...args) {
-    if (args[0].length && typeof args[0] === 'string') {
-      return this.stringToString(...args);
-    } else if (Array.isArray(args[0])) {
-      return this.arrayToString(...args);
+  toBuffer() {
+    if (arguments[0].length && typeof arguments[0] === 'string') {
+      return this.stringToBuffer(...arguments);
+    } else if (Array.isArray(arguments[0])) {
+      return this.arrayToBuffer(...arguments);
     }
-    if (args[0].byteLength) {
-      return this.bufferToString(...args);
+    if (arguments[0].byteLength) {
+      return this.bufferToBuffer(...arguments);
+    }
+  }
+
+  toString() {
+    if (arguments[0].length && typeof arguments[0] === 'string') {
+      return this.stringToString(...arguments);
+    } else if (Array.isArray(arguments[0])) {
+      return this.arrayToString(...arguments);
+    }
+    if (arguments[0].byteLength) {
+      return this.bufferToString(...arguments);
     }
   }
 
