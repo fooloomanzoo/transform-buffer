@@ -87,42 +87,84 @@ const DATA_TYPES = {
 
 class BufferView {
 
-  constructor(types, seqStructFn, seqDestructFn) {
+  constructor(types, sequenceKeys) {
     this.sequenceByteLength = 0;
     this.sequenceByteOrder = [0];
     this.getter = [];
     this.setter = [];
-    this.addSequenceTypes(types);
-    this.seqStructFn = seqStructFn;
-    this.seqDestructFn = seqDestructFn;
+    this.types = types;
+    this.sequenceKeys = [];
+    this.addSequenceTypes(types, sequenceKeys);
   }
 
-  addSequenceTypes(types) {
+  addSequenceTypes(types, sequenceKeys) {
+    if (!sequenceKeys) { // performance leak, when writing on object-keys, in comparison to pushing to array
+      this._handleSequenceAsArray = true;
+    }
     for (var i = 0; i < types.length; i++) {
       if (types[i] in DATA_TYPES) {
         this.sequenceByteLength += DATA_TYPES[types[i]].bytes;
         this.sequenceByteOrder.push(this.sequenceByteLength);
         this.getter.push(DATA_TYPES[types[i]].get);
         this.setter.push(DATA_TYPES[types[i]].set);
+        if (sequenceKeys && sequenceKeys[i]) {
+          this.sequenceKeys.push(sequenceKeys[i]);
+        } else {
+          this.sequenceKeys.push('' + i);
+        }
       } else {
         console.warn(`Invalid Number-Type: \"${types[i]}\"`)
       }
     }
+    this.setMapFunctions();
+  }
+
+  setMapFunctions() {
+    var sequenceKeys = this.sequenceKeys;
+    if (!Array.isArray(sequenceKeys)) {
+      this.mapSequence = null;
+      this.unmapSequence = null;
+      return;
+    }
+    this.mapSequence = function(arr) {
+      var ret = [];
+      // console.log(arguments.length);
+      var len = Math.floor(arr.length / sequenceKeys.length) * sequenceKeys.length;
+      var i = 0,
+          l = 0;
+      while (i < len) {
+        ret.push({})
+        for (var j = 0; j < sequenceKeys.length; j++, i++) {
+          ret[l][sequenceKeys[j]] = arr[i];
+        }
+        l++;
+      }
+      return ret;
+    };
+    this.unmapSequence = function(arr) {
+      var ret = [];
+      for (var i = 0; i < arr.length; i++) {
+        for (var j = 0; j < sequenceKeys.length; j++) {
+          ret.push(arr[i][sequenceKeys[j]]);
+        }
+      }
+      return ret;
+    };
   }
 
   getJoinFn(view) { // create a new scope
-    return function(offset, item) {
+    return function(offset, sequence) {
       for (var i = 0; i < this.setter.length; i++) {
-        this.setter[i].call(view, offset + this.sequenceByteOrder[i], item[i]);
+        this.setter[i].call(view, offset + this.sequenceByteOrder[i], sequence[this.sequenceKeys[i]]);
       }
     }.bind(this);
   }
 
   getSplitFn(view) { // create a new scope
     return function(offset) {
-      let ret = [];
+      var ret = [];
       for (var i = 0; i < this.getter.length; i++) {
-        ret.push( this.getter[i].call(view, offset + this.sequenceByteOrder[i]) );
+        ret.push(this.getter[i].call(view, offset + this.sequenceByteOrder[i]));
       }
       return ret;
     }.bind(this);
@@ -130,63 +172,64 @@ class BufferView {
 
   toArray() {
     if (arguments[0].length && typeof arguments[0] === 'string') {
-      return this.stringToArray(...arguments);
+      return this.stringToArray.apply(this, arguments);
     } else if (Array.isArray(arguments[0])) {
-      return this.arrayToArray(...arguments);
+      return this.arrayToArray.apply(this, arguments);
     }
     if (arguments[0].byteLength) {
-      return this.bufferToArray(...arguments);
+      return this.bufferToArray.apply(this, arguments);
     }
   }
 
   toBuffer() {
     if (arguments[0].length && typeof arguments[0] === 'string') {
-      return this.stringToBuffer(...arguments);
+      return this.stringToBuffer.apply(this, arguments);
     } else if (Array.isArray(arguments[0])) {
-      return this.arrayToBuffer(...arguments);
+      return this.arrayToBuffer.apply(this, arguments);
     }
     if (arguments[0].byteLength) {
-      return this.bufferToBuffer(...arguments);
+      return this.bufferToBuffer.apply(this, arguments);
     }
   }
 
   toString() {
     if (arguments[0].length && typeof arguments[0] === 'string') {
-      return this.stringToString(...arguments);
+      return this.stringToString.apply(this, arguments);
     } else if (Array.isArray(arguments[0])) {
-      return this.arrayToString(...arguments);
+      return this.arrayToString.apply(this, arguments);
     }
     if (arguments[0].byteLength) {
-      return this.bufferToString(...arguments);
+      return this.bufferToString.apply(this, arguments);
     }
   }
 
   bufferToArray(buffer, byteOffset, byteLength) {
     var ret = [];
-    const length = byteLength || buffer.byteLength;
+    const length = 0 || byteLength || buffer.byteLength;
     const view = new DataView(buffer, byteOffset, byteLength);
     // get a constant split functions
     const splitFn = this.getSplitFn(view);
     for (var offset = 0; offset < length; offset += this.sequenceByteLength) {
       ret.push( splitFn(offset) );
     }
-    if (this.seqStructFn) {
-      return ret.map(this.seqStructFn);
-    } else {
-      return ret;
-    }
+    if (!this._handleSequenceAsArray)
+      return this.mapSequence(ret);
+    return ret;
   }
 
-  stringToArray(str, encoding) {
+  arrayToArray(array, toMapped) { // copy of the array and optional mapping of its sequences
+    if (toMapped !== undefined) {
+      if (toMapped === true && this.mapSequence && typeof this.mapSequence === 'function') {
+        return this.mapSequence.apply(null, array);
+      } else if (toMapped === false && this.unmapSequence && typeof this.unmapSequence === 'function') {
+        return this.unmapSequence.apply(null, array);
+      }
+    }
+    return array;
+  }
+
+  stringToArray(str) {
     console.log('process string');
-  }
-
-  arrayToArray(array) { // copy of the array and optional mapping of its items
-    if (this.seqDestructFn) {
-      return this.seqDestructFn.apply(null, array);
-    } else {
-      return [...array];
-    }
   }
 
   arrayToBuffer(array) {
@@ -199,27 +242,26 @@ class BufferView {
     return buffer;
   }
 
-  stringToBuffer(str, encoding) {
-
-  }
-
   bufferToBuffer(buffer, start = 0, end) {
     return buffer.slice(start, end);
   }
 
-  arrayToString(array, encoding) {
+  stringToBuffer(str) {
 
   }
 
-  bufferToString(buffer, offset, byteLength, encoding) {
+  arrayToString(array) {
 
   }
 
-  stringToString(str, encoding) {
+  bufferToString(buffer, offset, byteLength) {
+
+  }
+
+  stringToString(str) {
 
   }
 
 }
-
 
 module.exports = BufferView;
