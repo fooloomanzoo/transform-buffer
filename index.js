@@ -90,8 +90,14 @@ class BufferView {
   constructor(types, sequenceKeys) {
     this.sequenceByteLength = 0;
     this.sequenceByteOrder = [0];
+    this.sequenceCharByteLength = 0;
+    this.sequenceCharLength = 0;
+    this.sequenceCharOrder = [0];
+    this.sequenceCharByteOrder = [];
     this.getter = [];
     this.setter = [];
+    this.charGetter = [];
+    this.charSetter = [];
     this.types = types;
     this.sequenceKeys = [];
     this.addSequenceTypes(types, sequenceKeys);
@@ -101,12 +107,34 @@ class BufferView {
     if (!sequenceKeys) { // performance leak, when writing on object-keys, in comparison to pushing to array
       this._handleSequenceAsArray = true;
     }
+    var j;
     for (var i = 0; i < types.length; i++) {
       if (types[i] in DATA_TYPES) {
         this.sequenceByteLength += DATA_TYPES[types[i]].bytes;
         this.sequenceByteOrder.push(this.sequenceByteLength);
+
         this.getter.push(DATA_TYPES[types[i]].get);
         this.setter.push(DATA_TYPES[types[i]].set);
+
+        j = 0;
+        while (j < DATA_TYPES[types[i]].bytes) {
+          if (j + 2 < DATA_TYPES[types[i]].bytes) {
+            this.charGetter.push(DataView.prototype.getUint16);
+            this.charSetter.push(DataView.prototype.setUint16);
+            this.sequenceCharByteLength+=2;
+            this.sequenceCharByteOrder.push(2);
+            j+=2;
+          } else {
+            this.charGetter.push(DataView.prototype.getUint8);
+            this.charSetter.push(DataView.prototype.setUint8);
+            this.sequenceCharByteLength++;
+            this.sequenceCharByteOrder.push(1);
+            j++;
+          }
+          this.sequenceCharOrder.push( this.sequenceCharByteLength );
+          this.sequenceCharLength++;
+        }
+
         if (sequenceKeys && sequenceKeys[i]) {
           this.sequenceKeys.push(sequenceKeys[i]);
         } else {
@@ -116,17 +144,17 @@ class BufferView {
         console.warn(`Invalid Number-Type: \"${types[i]}\"`)
       }
     }
-    this.setMapFunctions();
+    this.setTransposeFunctions();
   }
 
-  setMapFunctions() {
+  setTransposeFunctions() {
     var sequenceKeys = this.sequenceKeys;
     if (!Array.isArray(sequenceKeys)) {
-      this.mapSequence = null;
-      this.unmapSequence = null;
+      this.transposeSequence = null;
+      this.retrieveSequence = null;
       return;
     }
-    this.mapSequence = function(arr) {
+    this.transposeSequence = function(arr) {
       var ret = [];
       // console.log(arguments.length);
       var len = Math.floor(arr.length / sequenceKeys.length) * sequenceKeys.length;
@@ -141,7 +169,7 @@ class BufferView {
       }
       return ret;
     };
-    this.unmapSequence = function(arr) {
+    this.retrieveSequence = function(arr) {
       var ret = [];
       for (var i = 0; i < arr.length; i++) {
         for (var j = 0; j < sequenceKeys.length; j++) {
@@ -165,6 +193,31 @@ class BufferView {
       var ret = [];
       for (var i = 0; i < this.getter.length; i++) {
         ret.push(this.getter[i].call(view, offset + this.sequenceByteOrder[i]));
+      }
+      return ret;
+    }.bind(this);
+  }
+
+  getCharDecodingFn(view) {
+    return function(offset, str) {
+      var pos = 0;
+      var i = 0;
+      while (pos < str.length) {
+        i%=this.sequenceCharLength;
+        // console.log(pos, i, offset, this.sequenceCharByteOrder[i], this.sequenceCharByteOrder.length);
+        this.charSetter[i].call(view, offset, str.charCodeAt(pos) );
+        offset+=this.sequenceCharByteOrder[i];
+        i++;
+        pos++;
+      }
+    }.bind(this);
+  }
+
+  getCharEncodingFn(view) {
+    return function(offset) {
+      var ret = '';
+      for (var i = 0; i < this.charSetter.length; i++) {
+        ret += String.fromCharCode( this.charGetter[i].call(view, offset + this.sequenceCharOrder[i]) );
       }
       return ret;
     }.bind(this);
@@ -213,16 +266,16 @@ class BufferView {
       ret.push( splitFn(offset) );
     }
     if (!this._handleSequenceAsArray)
-      return this.mapSequence(ret);
+      return this.transposeSequence(ret);
     return ret;
   }
 
   arrayToArray(array, toMapped) { // copy of the array and optional mapping of its sequences
     if (toMapped !== undefined) {
-      if (toMapped === true && this.mapSequence && typeof this.mapSequence === 'function') {
-        return this.mapSequence.apply(null, array);
-      } else if (toMapped === false && this.unmapSequence && typeof this.unmapSequence === 'function') {
-        return this.unmapSequence.apply(null, array);
+      if (toMapped === true && this.transposeSequence && typeof this.transposeSequence === 'function') {
+        return this.transposeSequence.apply(null, array);
+      } else if (toMapped === false && this.retrieveSequence && typeof this.retrieveSequence === 'function') {
+        return this.retrieveSequence.apply(null, array);
       }
     }
     return array;
@@ -233,7 +286,7 @@ class BufferView {
   }
 
   arrayToBuffer(array) {
-    let buffer = new ArrayBuffer( array.length * this.sequenceByteLength );
+    var buffer = new ArrayBuffer( array.length * this.sequenceByteLength );
     const view = new DataView(buffer);
     const joinFn = this.getJoinFn(view);
     for (var i = 0, offset = 0; i < array.length; i++, offset += this.sequenceByteLength) {
@@ -246,16 +299,30 @@ class BufferView {
     return buffer.slice(start, end);
   }
 
-  stringToBuffer(str) {
-
+  stringToBuffer(str) { // using eather 8-Bit or 16-Bit encoding (ignoring the internal encoding of the String)
+    const byteLength = Math.ceil(str.length / this.sequenceCharByteLength) * this.sequenceCharByteLength;
+    console.log(byteLength);
+    var buffer = new ArrayBuffer(byteLength);
+    const view = new DataView(buffer);
+    const decodeFn = this.getCharDecodingFn(view);
+    decodeFn(0, str);
+    return buffer;
   }
 
   arrayToString(array) {
 
   }
 
-  bufferToString(buffer, offset, byteLength) {
-
+  bufferToString(buffer, byteOffset, byteLength) {
+    var ret = '';
+    const length = 0 || byteLength || buffer.byteLength;
+    const view = new DataView(buffer, byteOffset, byteLength);
+    // get a constant split functions
+    const encodeFn = this.getCharEncodingFn(view);
+    for (var offset = 0; offset < length; offset += this.sequenceCharByteLength) {
+      ret += encodeFn(offset);
+    }
+    return ret;
   }
 
   stringToString(str) {
