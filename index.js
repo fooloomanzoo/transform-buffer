@@ -85,19 +85,15 @@ const DATA_TYPES = {
     }
 };
 
+const MAX_ARGUMENTS_LENGTH = 0x4000;
+
 class BufferView {
 
   constructor(types, sequenceKeys) {
     this.sequenceByteLength = 0;
     this.sequenceByteOrder = [0];
-    this.sequenceCharByteLength = 0;
-    this.sequenceCharLength = 0;
-    this.sequenceCharOrder = [0];
-    this.sequenceCharByteOrder = [];
     this.getter = [];
     this.setter = [];
-    this.charGetter = [];
-    this.charSetter = [];
     this.types = types;
     this.sequenceKeys = [];
     this.addSequenceTypes(types, sequenceKeys);
@@ -115,25 +111,6 @@ class BufferView {
 
         this.getter.push(DATA_TYPES[types[i]].get);
         this.setter.push(DATA_TYPES[types[i]].set);
-
-        j = 0;
-        while (j < DATA_TYPES[types[i]].bytes) {
-          if (j + 2 < DATA_TYPES[types[i]].bytes) {
-            this.charGetter.push(DataView.prototype.getUint16);
-            this.charSetter.push(DataView.prototype.setUint16);
-            this.sequenceCharByteLength+=2;
-            this.sequenceCharByteOrder.push(2);
-            j+=2;
-          } else {
-            this.charGetter.push(DataView.prototype.getUint8);
-            this.charSetter.push(DataView.prototype.setUint8);
-            this.sequenceCharByteLength++;
-            this.sequenceCharByteOrder.push(1);
-            j++;
-          }
-          this.sequenceCharOrder.push( this.sequenceCharByteLength );
-          this.sequenceCharLength++;
-        }
 
         if (sequenceKeys && sequenceKeys[i]) {
           this.sequenceKeys.push(sequenceKeys[i]);
@@ -198,31 +175,6 @@ class BufferView {
     }.bind(this);
   }
 
-  getCharDecodingFn(view) {
-    return function(offset, str) {
-      var pos = 0;
-      var i = 0;
-      while (pos < str.length) {
-        i%=this.sequenceCharLength;
-        // console.log(pos, i, offset, this.sequenceCharByteOrder[i], this.sequenceCharByteOrder.length);
-        this.charSetter[i].call(view, offset, str.charCodeAt(pos) );
-        offset+=this.sequenceCharByteOrder[i];
-        i++;
-        pos++;
-      }
-    }.bind(this);
-  }
-
-  getCharEncodingFn(view) {
-    return function(offset) {
-      var ret = '';
-      for (var i = 0; i < this.charSetter.length; i++) {
-        ret += String.fromCharCode( this.charGetter[i].call(view, offset + this.sequenceCharOrder[i]) );
-      }
-      return ret;
-    }.bind(this);
-  }
-
   toArray() {
     if (arguments[0].length && typeof arguments[0] === 'string') {
       return this.stringToArray.apply(this, arguments);
@@ -282,7 +234,6 @@ class BufferView {
   }
 
   stringToArray(str) {
-    console.log('process string');
   }
 
   arrayToBuffer(array) {
@@ -299,30 +250,50 @@ class BufferView {
     return buffer.slice(start, end);
   }
 
-  stringToBuffer(str) { // using eather 8-Bit or 16-Bit encoding (ignoring the internal encoding of the String)
-    const byteLength = Math.ceil(str.length / this.sequenceCharByteLength) * this.sequenceCharByteLength;
-    console.log(byteLength);
-    var buffer = new ArrayBuffer(byteLength);
-    const view = new DataView(buffer);
-    const decodeFn = this.getCharDecodingFn(view);
-    decodeFn(0, str);
-    return buffer;
+  stringToBuffer(str) { // http://phoboslab.org/log/2015/11/the-absolute-worst-way-to-read-typed-array-data-with-javascriptcore
+    var view = new DataView( new ArrayBuffer(str.length * 2) );
+    for (var i = 0; i < str.length; i++) {
+      view.setUint16( i*2, str.charCodeAt(i), true );
+    }
+    return view.buffer;
   }
 
   arrayToString(array) {
 
   }
 
-  bufferToString(buffer, byteOffset, byteLength) {
-    var ret = '';
-    const length = 0 || byteLength || buffer.byteLength;
-    const view = new DataView(buffer, byteOffset, byteLength);
-    // get a constant split functions
-    const encodeFn = this.getCharEncodingFn(view);
-    for (var offset = 0; offset < length; offset += this.sequenceCharByteLength) {
-      ret += encodeFn(offset);
+  bufferToString(buffer, byteOffset, byteLength) { // http://phoboslab.org/log/2015/11/the-absolute-worst-way-to-read-typed-array-data-with-javascriptcore
+    var u16Count = byteLength ? byteLength >> 1 : buffer.byteLength >> 1;
+    byteOffset = byteOffset || 0;
+
+
+    // Create a Uint16 View from the TypedArray or ArrayBuffer
+    var u16 = new Uint16Array(buffer, byteOffset, u16Count);
+
+    // If this array has an odd byte length, we have to append the last
+    // byte separately, instead of reading it from the Uint16Array.
+    var lastByte = '';
+    if (buffer.byteLength % 2 !== 0) {
+        var u8 = new Uint8Array(u16.buffer, u16.byteOffset);
+        lastByte = String.fromCharCode(u8[u16Count * 2]);
     }
-    return ret;
+
+    if (u16Count < MAX_ARGUMENTS_LENGTH) {
+        // Fast case - data is smaller than chunk size and the conversion
+        // can be done in one step.
+        return String.fromCharCode.apply(null, u16) + lastByte;
+    }
+    else {
+        // Slow case - we need to split the data into smaller chunks,
+        // collect them in an array and finally join them together.
+        var chunks = [], i = 0;
+        while (i < u16Count) {
+            chunks.push(String.fromCharCode.apply(null, u16.subarray(i, i + MAX_ARGUMENTS_LENGTH) ));
+            i += MAX_ARGUMENTS_LENGTH;
+        }
+        chunks.push(lastByte);
+        return chunks.join('');
+    }
   }
 
   stringToString(str) {

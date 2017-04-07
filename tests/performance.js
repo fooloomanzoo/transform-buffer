@@ -64,13 +64,13 @@ retArray.length = 0;
 
 var bv3 = new BufferView(types);
 var testString = '', retString = '';
-var check = '', retCheck = '';
-n = 10;
+n = 1 * 1000 * 1000 + 1;
 
-for (var i = 0; i < n; i++) {
-  testString += String.fromCharCode(Math.floor(Math.random()*32465));
-  check += testString.charCodeAt(i) + ' ';
-}
+// for (var i = 0; i < types.length; i++) {
+//   testString += String.fromCharCode(Math.floor(Math.random()*32465));
+// }
+testString = 'abc'
+testString = testString.repeat( n / types.length );
 
 time_start = process.hrtime();
 buffer = bv3.stringToBuffer(testString);
@@ -82,12 +82,18 @@ retString = bv2.bufferToString(buffer);
 time_diff = process.hrtime(time_start);
 console.log('Buffer to String:', n, 'elements, time elapsed:', time_diff);
 
-for (var i = 0; i < n; i++) {
-  retCheck += retString.charCodeAt(i) + ' ';
+console.log(testString == retString, testString === retString, testString.length, retString.length, testString.charCodeAt(testString.length - 1), retString.charCodeAt(retString.length - 1));
+
+var failed = [];
+for (var i = 0; i < testString.length; i++) {
+  if (testString.charCodeAt(i) !== retString.charCodeAt(i)) {
+      // console.log(i, testString.charCodeAt(i), retString.charCodeAt(i));
+      failed.push(i);
+  }
 }
 
-console.log(testString, retString);
-console.log(check, '\n', retCheck);
+console.log(failed.length);
+
 testString.length = 0;
 retString.length = 0;
 
