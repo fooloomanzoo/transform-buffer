@@ -85,6 +85,8 @@ const DATA_TYPES = {
     }
 };
 
+// TODO: rewrite in proper module form (also in browser form, --> rollup, d3), proper tests and test-cases
+
 const MAX_ARGUMENTS_LENGTH = 0x4000;
 
 class BufferView {
@@ -234,6 +236,7 @@ class BufferView {
   }
 
   stringToArray(str) {
+    return this.bufferToArray(this.stringToBuffer(str));
   }
 
   arrayToBuffer(array) {
@@ -259,13 +262,12 @@ class BufferView {
   }
 
   arrayToString(array) {
-
+    return this.bufferToString(this.arrayToBuffer(array));
   }
 
   bufferToString(buffer, byteOffset, byteLength) { // http://phoboslab.org/log/2015/11/the-absolute-worst-way-to-read-typed-array-data-with-javascriptcore
     var u16Count = byteLength ? byteLength >> 1 : buffer.byteLength >> 1;
     byteOffset = byteOffset || 0;
-
 
     // Create a Uint16 View from the TypedArray or ArrayBuffer
     var u16 = new Uint16Array(buffer, byteOffset, u16Count);
@@ -297,7 +299,7 @@ class BufferView {
   }
 
   stringToString(str) {
-
+    return str;
   }
 
 }
