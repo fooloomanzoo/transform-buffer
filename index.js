@@ -235,8 +235,8 @@ class BufferView {
     return array;
   }
 
-  stringToArray(str) {
-    return this.bufferToArray(this.stringToBuffer(str));
+  stringToArray(str, toMapped) {
+    return this.arrayToArray(this.bufferToArray(this.stringToBuffer(str)), toMapped);
   }
 
   arrayToBuffer(array) {
@@ -261,8 +261,8 @@ class BufferView {
     return view.buffer;
   }
 
-  arrayToString(array) {
-    return this.bufferToString(this.arrayToBuffer(array));
+  arrayToString(array, toMapped) {
+    return this.bufferToString(this.arrayToBuffer(this.arrayToArray(array, toMapped)));
   }
 
   bufferToString(buffer, byteOffset, byteLength) { // http://phoboslab.org/log/2015/11/the-absolute-worst-way-to-read-typed-array-data-with-javascriptcore
