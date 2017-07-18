@@ -1,7 +1,7 @@
 {
   "name": "transform-buffer",
   "version": "0.1.0",
-  "description": "Creating Sequences of Data from Buffers",
+  "description": "Encoding and Decoding Sequences in Buffers",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
