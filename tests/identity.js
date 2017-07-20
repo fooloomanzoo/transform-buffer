@@ -1,4 +1,4 @@
-const TransBuffer = require('../transform-buffers.js');
+const TransBuffer = require('../transpose-binarys.js');
 // 
 // function assertTest(testObj, enc, dec, compFn, n) {
 //   var tmp1, tmp2, time_start, time_diff_enc, time_diff_dec, failed;

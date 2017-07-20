@@ -1,5 +1,5 @@
 {
-  "name": "transform-buffer",
+  "name": "transpose-binary",
   "version": "0.1.0",
   "description": "Encoding and Decoding Sequences in Buffers",
   "main": "index.js",
@@ -20,6 +20,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fooloomanzoo/transform-buffer.git"
+    "url": "git+https://github.com/fooloomanzoo/transpose-binary.git"
   }
 }
