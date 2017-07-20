@@ -4,8 +4,22 @@
   "description": "Encoding and Decoding Sequences in Buffers",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gulp build",
+    "test": "gulp test"
+  },
+  "devDependencies": {
+    "gulp": "*",
+    "rollup-plugin-uglify": "*",
+    "mocha": "*",
+    "uglify-es": "*",
+    "rollup": "*",
+    "rollup-plugin-commonjs": "*",
+    "rollup-plugin-node-resolve": "*"
   },
   "author": "Johannes Brautzsch",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fooloomanzoo/transform-buffer.git"
+  }
 }
