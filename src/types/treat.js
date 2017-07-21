@@ -6,15 +6,16 @@ function convert (v) {
   return v;
 }
 
-function set (view, byteOffset, value) {
-  s.call(view, byteOffset, clamp(value));
-}
-
-function get (view, byteOffset) {
-  return g.call(view, byteOffset);
-}
-
 export default function treat (view, s, g, min, max, byteLength) {
+
+  function set (view, offset, value) {
+    s.call(view, offset, clamp(value));
+  }
+
+  function get (view, offset) {
+    return g.call(view, offset);
+  }
+
   return {
     set: set,
     get: get,

@@ -1,4 +1,4 @@
-import types from './types';
+import types from './types/index.js';
 
 /**
  * [set and get sequences of data on a given view to a buffer]

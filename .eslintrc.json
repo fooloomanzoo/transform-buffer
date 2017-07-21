@@ -5,22 +5,19 @@
     "node": true,
     "mocha": true
   },
-  "extends": [ "airbnb", "plugin:import/warnings" ],
+  "extends": [ "plugin:import/warnings" ],
   "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
     "ecmaFeatures": {
+      "jsx": true,
       "experimentalObjectRestSpread": true
     }
   },
   "rules": {
-    "quotes": [
-      2, "single"
-    ],
-    "linebreak-style": [
-      2, "unix"
-    ],
+    "quotes": 0,
+    "linebreak-style": 0,
     "no-unused-vars": [ 2, {
       "vars": "all",
       "args": "after-used",
@@ -31,9 +28,6 @@
       2, "always"
     ],
     "no-console": 0,
-    "id-length": [ 2, {
-      "min": 2,
-      "exceptions": [ "x", "v", "T" ]
-    } ]
+    "id-length": 0
   }
 }
