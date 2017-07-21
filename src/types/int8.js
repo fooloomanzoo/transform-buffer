@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function (view) {
+export default function int8 (view) {
 
   const min = -128,
   	max = 127,

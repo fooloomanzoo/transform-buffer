@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function (view) {
+export default function bool (view) {
 
   const min = 0,
   	max = 1,
@@ -15,15 +15,15 @@ export default function (view) {
 
   t.clamp = function (v) {
     return v === true ? 1 : 0;
-  }
+  };
 
   t.convert = function (v) {
     return v === 1 ? true : false;
-  }
+  };
 
   t.get = function (view, byteOffset) {
-    return t.convert(g.call(view, byteOffset))
-  }
+    return t.convert(g.call(view, byteOffset));
+  };
 
   return t;
 }

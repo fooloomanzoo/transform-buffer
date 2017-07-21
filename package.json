@@ -8,13 +8,33 @@
     "test": "gulp test"
   },
   "devDependencies": {
-    "gulp": "*",
-    "rollup-plugin-uglify": "*",
-    "mocha": "*",
-    "uglify-es": "*",
+    "babel": "^6.23.0",
+    "babel-core": "^6.25.0",
+    "babel-eslint": "^7.2.3",
+    "babel-polyfill": "*",
+    "babel-preset-es2015": "^6.24.1",
+    "chai": "*",
+    "eslint": "^4.3.0",
+    "eslint-config-airbnb": "^15.0.2",
+    "eslint-plugin-babel": "^4.1.1",
+    "eslint-plugin-import": "^2.7.0",
+    "expect": "^1.20.2",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-eslint": "^4.0.0",
+    "gulp-help": "^1.6.1",
+    "gulp-mocha": "^4.3.1",
+    "mocha": "^3.4.2",
     "rollup": "*",
     "rollup-plugin-commonjs": "*",
-    "rollup-plugin-node-resolve": "*"
+    "rollup-plugin-node-resolve": "*",
+    "rollup-plugin-uglify": "*",
+    "uglify-es": "*"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
   },
   "author": "Johannes Brautzsch",
   "license": "MIT",

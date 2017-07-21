@@ -20,4 +20,4 @@ export default {
   float32: float32,
   float64: float64,
   date: date
-}
+};
