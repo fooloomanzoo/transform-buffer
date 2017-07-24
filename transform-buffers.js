@@ -1,7 +1,7 @@
 const DATA_TYPES = {
     'bool': {
         set: function(byteOffset, value) { DataView.prototype.setInt8.call(this, byteOffset, value ? 1 : 0); },
-        get: function(byteOffset) { return DataView.prototype.getInt8.call(this, byteOffset) ? true : false },
+        get: function(byteOffset) { return DataView.prototype.getInt8.call(this, byteOffset) ? true : false; },
         min: 0,
         max: 1,
         bytes: 1
