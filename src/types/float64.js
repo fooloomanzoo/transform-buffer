@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function float64 (view) {
+export default function float64 () {
 
   const min = -Number.MAX_VALUE,
   	max = Number.MAX_VALUE,
@@ -11,5 +11,5 @@ export default function float64 (view) {
     g = getter.float64,
     s = setter.float64;
 
-  return treat(view, s, g, min, max, byteLength);
+  return treat(s, g, min, max, byteLength);
 }

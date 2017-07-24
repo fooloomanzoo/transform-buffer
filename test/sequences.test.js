@@ -2,6 +2,7 @@
 const { expect, assert, use } = require('chai');
 const { sequence } = require('../lib/index.js');
 
+
 describe('set parameters of a sequence', function() {
   it('should accept given datatypes for sequence', function(done) {
     var types = ['bool', 'date', 'float32', 'float64', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32'];
@@ -70,12 +71,13 @@ describe('set parameters of a sequence', function() {
   });
 });
 
-// describe('set data of a sequence', function() {
-//   it('should accept given datatypes for sequence', function(done) {
-//     var types = ['bool', 'date', 'float32'];
-//     expect(function() {
-//       sequence(types);
-//       done();
-//     }).to.not.throw();
-//   });
-// });
+
+describe('set data of a sequence', function() {
+  it('should accept given datatypes for sequence', function(done) {
+    var s = sequence( ['bool', 'date', 'float32'] );
+    expect(function() {
+      s.set([true, new Date(), 3]);
+      done();
+    }).to.not.throw();
+  });
+});

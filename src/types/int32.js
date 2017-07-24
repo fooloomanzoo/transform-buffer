@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function int32 (view) {
+export default function int32 () {
 
   const min = -2147483648,
   	max = 2147483647,
@@ -11,5 +11,5 @@ export default function int32 (view) {
     g = getter.int32,
     s = setter.int32;
 
-  return treat(view, s, g, min, max, byteLength);
+  return treat(s, g, min, max, byteLength);
 }

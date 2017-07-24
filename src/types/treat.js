@@ -1,5 +1,6 @@
-export default function treat (view, s, g, min, max, byteLength) {
+export default function treat (s, g, min, max, byteLength) {
 
+  // console.log(arguments);
   function clamp (v) {
     return v <= max ? (v >= min ? v : min) : max;
   }

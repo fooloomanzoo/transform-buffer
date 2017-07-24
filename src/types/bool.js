@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function bool (view) {
+export default function bool () {
 
   const min = 0,
   	max = 1,
@@ -11,7 +11,7 @@ export default function bool (view) {
     g = getter.int8,
     s = setter.int8;
 
-  var t = treat(view, s, g, min, max, byteLength);
+  var t = treat(s, g, min, max, byteLength);
 
   t.clamp = function (v) {
     return v === true ? 1 : 0;

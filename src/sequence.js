@@ -25,14 +25,14 @@ export default function(datatypes, keys, dataview) {
  * @param  {Object} [the view on the buffer, where the data is set]
  * @return {number} [byteLength]
  */
-  const setSequenceTypes = function (datatypes, sequenceKeys, view) {
+  const setSequenceTypes = function (datatypes, sequenceKeys, v) {
     if (!(Array.isArray(datatypes) && (datatypes.length > 0))) {
       throw new TypeError(`Types for Data must be an Array: ${datatypes}`);
     }
     if (sequenceKeys && !(Array.isArray(sequenceKeys) && (sequenceKeys.length === datatypes.length))) {
       throw new TypeError(`Keys for Data must be an Array and equal by lngth to Datatypes: ${sequenceKeys}`);
     }
-    if (view && !(ArrayBuffer.isView(view) && view.buffer)) {
+    if (v && !(ArrayBuffer.isView(v) && v.buffer)) {
       throw new TypeError(`View must a view on a buffer`);
     }
     byteLength = 0;
@@ -60,11 +60,12 @@ export default function(datatypes, keys, dataview) {
         throw new TypeError(`Invalid Number-Type: ${datatypes[i]}`);
       }
     }
-    if (view && view.byteLength !== undefined) {
-      dataview = view;
+    if (v && v.byteLength !== undefined) {
+      dataview = v;
     } else {
-      dataview = new DataView( new ArrayBuffer( byteLength ), offset, byteLength);
+      view();
     }
+    byteOffset();
     offcutLength = dataview.byteLength - byteLength;
     if (offcutLength < 0) {
       throw new TypeError(`Buffer is smaller than the given sequence`);
@@ -101,7 +102,7 @@ export default function(datatypes, keys, dataview) {
  */
   const set = function(value) {
     for (var i = 0; i < setter.length; i++) {
-      setter[i].call(dataview, offset += byteOrder[i], value[keys[i]]);
+      setter[i](dataview, offset + byteOrder[i], value[keys[i]]);
     }
     return dataview;
   };
@@ -114,7 +115,7 @@ export default function(datatypes, keys, dataview) {
   const get = function() {
     var ret = [];
     for (var i = 0; i < getter.length; i++) {
-      ret.push(getter[i].call(dataview, offset += byteOrder[i]));
+      ret.push(getter[i](dataview, offset += byteOrder[i]));
     }
     return handleAsArray ? ret : ret;
   };

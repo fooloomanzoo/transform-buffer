@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function uint8 (view) {
+export default function uint8 () {
 
   const min = 0,
   	max = 255,
@@ -11,5 +11,5 @@ export default function uint8 (view) {
     g = getter.uint8,
     s = setter.uint8;
 
-  return treat(view, s, g, min, max, byteLength);
+  return treat(s, g, min, max, byteLength);
 }

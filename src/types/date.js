@@ -3,7 +3,7 @@ import * as setter from './set';
 import * as getter from './get';
 import treat from './treat';
 
-export default function date (view) {
+export default function date () {
 
   const min = -8640000000000000,
   	max = 8640000000000000,
@@ -11,7 +11,7 @@ export default function date (view) {
     g = getter.float64,
     s = setter.float64;
 
-  var t = treat(view, s, g, min, max, byteLength);
+  var t = treat(s, g, min, max, byteLength);
 
   t.clamp = function (v) {
     v = (typeof v === 'number') ? v : (typeof v === 'object') ? +v : parseInt(v);
