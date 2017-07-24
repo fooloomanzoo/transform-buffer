@@ -25,10 +25,10 @@ export default function(datatypes, keys, view) {
  * @return {[Number]} [byteLength]
  */
   const setSequenceTypes = function (datatypes, sequenceKeys, view) {
-    if (!Array.isArray(datatypes)) {
+    if (!(Array.isArray(datatypes) && datatypes.length > 0)) {
       throw new TypeError(`Types for Data must be an Array: ${datatypes}`);
     }
-    if (sequenceKeys && !Array.isArray(sequenceKeys)) {
+    if (sequenceKeys && !(Array.isArray(sequenceKeys) && sequenceKeys.length === datatypes.length)) {
       throw new TypeError(`Keys for Data must be an Array: ${sequenceKeys}`);
     }
     byteLength = 0;
@@ -40,7 +40,7 @@ export default function(datatypes, keys, view) {
     for (var i = 0; i < datatypes.length; i++) {
       if (datatypes[i] in types) {
         byteLength += types[datatypes[i]].bytes;
-        byteOrder.push(this.sequenceByteLength);
+        byteOrder.push(byteLength);
 
         getter.push(types[datatypes[i]].get);
         setter.push(types[datatypes[i]].set);

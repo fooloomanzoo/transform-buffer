@@ -12,7 +12,7 @@ gulpHelp.task('clean', 'remove generated files in lib and dist directory', () =>
 	return del(['lib/**/*', 'dist/**/*']);
 });
 
-gulpHelp.task('rollup', 'rollup modules for browser and node usage', () => {
+gulpHelp.task('rollup-node', 'rollup modules for node usage', () => {
   return rollup({
           entry: 'export.js',
           plugins: [
@@ -28,14 +28,18 @@ gulpHelp.task('rollup', 'rollup modules for browser and node usage', () => {
         .then(result => {
           return fs.writeFileSync( 'lib/index.js', result.code );
         })
-        .then(_ => {
-          return rollup({
-                  entry: 'export.browser.js',
-                  plugins: [
-                    nodeResolve({jsnext: true}),
-                    uglify({}, minify)
-                  ]
-                });
+        .catch(err => {
+          console.error(err);
+        });
+});
+
+gulpHelp.task('rollup-browser', 'rollup modules for browser', () => {
+  return rollup({
+          entry: 'export.browser.js',
+          plugins: [
+            nodeResolve({jsnext: true}),
+            uglify({}, minify)
+          ]
         })
         .then(bundle => {
           return bundle.generate({
@@ -51,7 +55,7 @@ gulpHelp.task('rollup', 'rollup modules for browser and node usage', () => {
         });
 });
 
-gulpHelp.task('test', 'run the unit tests using mocha', () => {
+gulpHelp.task('mocha', 'run the unit tests using mocha and chai', () => {
 	return gulp.src(['test/**/*.test.js'])
               .pipe(
                 mocha({
@@ -60,7 +64,9 @@ gulpHelp.task('test', 'run the unit tests using mocha', () => {
                );
 });
 
-gulpHelp.task('build', 'generate the es5 library in lib and browser file in dist', ['clean', 'rollup']);
+gulpHelp.task('build', 'generate the es5 library in lib and browser file in dist', ['clean', 'rollup-node', 'rollup-browser']);
+
+gulpHelp.task('test', 'run the unit tests for node', ['clean', 'rollup-node', 'mocha']);
 
 // Default Task
 gulpHelp.task('default', ['help']);
