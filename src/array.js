@@ -3,8 +3,8 @@ import { default as sequ } from './sequence';
 /**
  * [transpose and rejoin arrays on a given view to a buffer]
  * @method
- * @param  {[Array]} datatypes [Definition of types of data in the given values]
- * @param  {[Array]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
+ * @param  {string[]} datatypes [Definition of types of data in the given values]
+ * @param  {string[]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
  */
 export default function(datatypes, keys) {
   var _sequence;
@@ -16,7 +16,7 @@ export default function(datatypes, keys) {
   /**
    * [description]
    * @method
-   * @return {[type]} [description]
+   * @return {Object[]} [description]
    */
   const join = function() {
     if (!arguments.length) return;
@@ -38,7 +38,7 @@ export default function(datatypes, keys) {
   /**
    * [description]
    * @method
-   * @return {[type]} [description]
+   * @return {Object[]} [description]
    */
   const split = function() {
     if (!arguments.length) return;

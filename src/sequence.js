@@ -3,14 +3,15 @@ import types from './types/index.js';
 /**
  * [set and get sequences of data on a given view to a buffer]
  * @method
- * @param  {[Array]} datatypes [Definition of types of data in the given values]
- * @param  {[Array]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
- * @return {[Object]} [description]
+ * @param  {string[]} datatypes [Definition of types of data in the given values]
+ * @param  {string[]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
+ * @return {Object} [description]
  */
 
-export default function(datatypes, keys, view) {
+export default function(datatypes, keys, dataview) {
   var byteOrder,
     byteLength,
+    offcutLength,
     offset,
     getter,
     setter,
@@ -19,31 +20,36 @@ export default function(datatypes, keys, view) {
 /**
  * [change the given datastructur of the sequence]
  * @method
- * @param  {[Array]} datatypes [Definition of types of data in the given values]
- * @param  {[Array]} sequenceKeys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
- * @param  {[Object]} [the view on the buffer, where the data is set]
- * @return {[Number]} [byteLength]
+ * @param  {string[]} datatypes [Definition of types of data in the given values]
+ * @param  {string[]} sequenceKeys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
+ * @param  {Object} [the view on the buffer, where the data is set]
+ * @return {number} [byteLength]
  */
   const setSequenceTypes = function (datatypes, sequenceKeys, view) {
-    if (!(Array.isArray(datatypes) && datatypes.length > 0)) {
+    if (!(Array.isArray(datatypes) && (datatypes.length > 0))) {
       throw new TypeError(`Types for Data must be an Array: ${datatypes}`);
     }
-    if (sequenceKeys && !(Array.isArray(sequenceKeys) && sequenceKeys.length === datatypes.length)) {
-      throw new TypeError(`Keys for Data must be an Array: ${sequenceKeys}`);
+    if (sequenceKeys && !(Array.isArray(sequenceKeys) && (sequenceKeys.length === datatypes.length))) {
+      throw new TypeError(`Keys for Data must be an Array and equal by lngth to Datatypes: ${sequenceKeys}`);
+    }
+    if (view && !(ArrayBuffer.isView(view) && view.buffer)) {
+      throw new TypeError(`View must a view on a buffer`);
     }
     byteLength = 0;
     byteOrder = [0];
     getter = [];
     setter = [];
     keys = [];
+    var type;
     handleAsArray = Boolean(sequenceKeys);
     for (var i = 0; i < datatypes.length; i++) {
       if (datatypes[i] in types) {
-        byteLength += types[datatypes[i]].bytes;
+        type = types[datatypes[i]]();
+        byteLength += type.byteLength;
         byteOrder.push(byteLength);
 
-        getter.push(types[datatypes[i]].get);
-        setter.push(types[datatypes[i]].set);
+        getter.push(type.get);
+        setter.push(type.set);
 
         if (sequenceKeys && sequenceKeys[i]) {
           keys.push(sequenceKeys[i]);
@@ -54,48 +60,61 @@ export default function(datatypes, keys, view) {
         throw new TypeError(`Invalid Number-Type: ${datatypes[i]}`);
       }
     }
-    dataview(view);
+    if (view && view.byteLength !== undefined) {
+      dataview = view;
+    } else {
+      dataview = new DataView( new ArrayBuffer( byteLength ), offset, byteLength);
+    }
+    offcutLength = dataview.byteLength - byteLength;
+    if (offcutLength < 0) {
+      throw new TypeError(`Buffer is smaller than the given sequence`);
+    }
     return byteLength;
   };
 
   /**
    * [setting or getting the dataview of the sequence]
    * @method
-   * @param  {[Object]} [the view on the buffer, where the data is set]
-   * @param  {[Number]} offset [offset in the view]
-   * @return {[Object]} [the dataview]
+   * @param  {Object} [the view on the buffer, where the data is set]
+   * @param  {number} [the offset of the view on the buffer, where the data is set]
+   * @return {Object} [the dataview]
    */
-  const dataview = function () {
-    if (arguments[0]) {
-      view = arguments[0];
-      if (arguments[1] !== undefined) {
-        offset = arguments[1];
-      }
-    }
-    offset = offset || 0;
-    return view;
+  const view = function () {
+    return (arguments.length === 0) ? (dataview !== undefined ? dataview : (dataview = new DataView( new ArrayBuffer( byteLength, byteOffset(arguments[1]), byteLength )))) : (dataview = arguments[0]);
+  };
+
+  /**
+   * [setting or getting the byteOffset of the view]
+   * @method
+   * @param  {number} [the offset of the view on the buffer, where the data is set]
+   * @return {Object} [the offset]
+   */
+  const byteOffset = function () {
+    return (arguments.length === 0) ? (offset !== undefined ? offset : (offset = 0)) : (offset = arguments[0]);
   };
 
 /**
  * [set data to an given view on a buffer]
  * @method
  * @param  {[Object,Array]} value [The value to be set]
+ * @return {Object} [the dataview]
  */
   const set = function(value) {
     for (var i = 0; i < setter.length; i++) {
-      setter[i].call(view, offset += byteOrder[i], value[keys[i]]);
+      setter[i].call(dataview, offset += byteOrder[i], value[keys[i]]);
     }
+    return dataview;
   };
 
 /**
  * [retrieve data of an given view on a buffer]
  * @method
- * @return {[Object,Array]} [The get value]
+ * @return {Object|Object[]} [The get value]
  */
   const get = function() {
     var ret = [];
     for (var i = 0; i < getter.length; i++) {
-      ret.push(getter[i].call(view, offset += byteOrder[i]));
+      ret.push(getter[i].call(dataview, offset += byteOrder[i]));
     }
     return handleAsArray ? ret : ret;
   };
@@ -105,13 +124,14 @@ export default function(datatypes, keys, view) {
   return {
     byteOrder: byteOrder,
     byteLength: byteLength,
-    offset: offset,
+    byteOffset: byteOffset,
+    offcutLength: offcutLength,
     getter: getter,
     setter: setter,
     keys: keys,
     handleAsArray: handleAsArray,
     set: set,
     get: get,
-    dataview: dataview
+    dataview: view
   };
 }

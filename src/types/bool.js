@@ -17,12 +17,12 @@ export default function bool (view) {
     return v === true ? 1 : 0;
   };
 
-  t.convert = function (v) {
+  t.valueOf = function (v) {
     return v === 1 ? true : false;
   };
 
   t.get = function (view, byteOffset) {
-    return t.convert(g.call(view, byteOffset));
+    return t.valueOf(g.call(view, byteOffset));
   };
 
   return t;
