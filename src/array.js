@@ -1,4 +1,4 @@
-import { default as sequ } from './sequence';
+import { default as sequence } from './sequence';
 
 /**
  * [transpose and rejoin arrays on a given view to a buffer]
@@ -9,8 +9,8 @@ import { default as sequ } from './sequence';
 export default function(datatypes, keys) {
   var _sequence;
 
-  const sequence = function() {
-    return arguments.length === 0 ? (_sequence = sequ(...arguments)) : _sequence;
+  const init = function() {
+    return arguments.length === 0 ? (_sequence = sequence(...arguments)) : _sequence;
   };
 
   /**
@@ -68,10 +68,10 @@ export default function(datatypes, keys) {
   };
 
 
-  sequence(...arguments);
+  init(...arguments);
 
   return {
-    sequence: sequence,
+    init: init,
     split: split,
     join: join,
     transpose: transpose,
