@@ -14,8 +14,13 @@ export default function date () {
   var t = treat(s, g, min, max, byteLength);
 
   t.clamp = function (v) {
+    // Date are stored as numbers in utc-convention
     v = (typeof v === 'number') ? v : (typeof v === 'object') ? +v : parseInt(v);
     return v <= max ? (v >= min ? v : min) : max;
+  };
+
+  t.get = function (view, byteOffset) {
+    return new Date(g.call(view, byteOffset));
   };
 
   return t;

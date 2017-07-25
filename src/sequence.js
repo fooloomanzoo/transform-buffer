@@ -41,7 +41,7 @@ export default function(datatypes, keys, dataview) {
     setter = [];
     keys = [];
     var type;
-    handleAsArray = Boolean(sequenceKeys);
+    handleAsArray = !Boolean(sequenceKeys);
     for (var i = 0; i < datatypes.length; i++) {
       if (datatypes[i] in types) {
         type = types[datatypes[i]]();
@@ -113,11 +113,20 @@ export default function(datatypes, keys, dataview) {
  * @return {Object|Object[]} [The get value]
  */
   const get = function() {
-    var ret = [];
-    for (var i = 0; i < getter.length; i++) {
-      ret.push(getter[i](dataview, offset += byteOrder[i]));
+    var offs = arguments[0] || offset;
+    var ret;
+    if (handleAsArray === true) {
+      ret = [];
+      for (var i = 0; i < getter.length; i++) {
+        ret.push(getter[i](dataview, offs + byteOrder[i]));
+      }
+    } else {
+      ret = {};
+      for (var i = 0; i < getter.length; i++) {
+        ret[keys[i]] = getter[i](dataview, offs + byteOrder[i]);
+      }
     }
-    return handleAsArray ? ret : ret;
+    return ret;
   };
 
   setSequenceTypes(...arguments);
