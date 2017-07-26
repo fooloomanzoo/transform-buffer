@@ -1,16 +1,22 @@
-import { default as sequence } from './sequence';
+import sequence from './sequence';
 
 /**
- * [transpose and rejoin arrays on a given view to a buffer]
+ * [transpose and rejoin records on a given view to a buffer]
  * @method
  * @param  {string[]} datatypes [Definition of types of data in the given values]
  * @param  {string[]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
  */
-export default function(datatypes, keys) {
+export default function record() {
   var _sequence;
 
+
+  /**
+   * [description]
+   * @method
+   * @return {[Object]} [the sequence Object]
+   */
   const init = function() {
-    return arguments.length === 0 ? (_sequence = sequence(...arguments)) : _sequence;
+    return arguments.length === 0 ? _sequence : (_sequence = sequence(...arguments));
   };
 
   /**
@@ -58,7 +64,7 @@ export default function(datatypes, keys) {
     const view = new DataView(buffer);
     sequence.dataview(view);
     for (var i = 0, offset = 0; i < arguments.length; i++, offset += this.sequenceByteLength) {
-      sequence.set(offset, array[i]);
+      sequence.set(offset, record[i]);
     }
     return buffer;
   };
@@ -71,7 +77,8 @@ export default function(datatypes, keys) {
   init(...arguments);
 
   return {
-    init: init,
+    sequence: init,
+    dataview: _sequence.view,
     split: split,
     join: join,
     transpose: transpose,
