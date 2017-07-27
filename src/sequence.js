@@ -28,7 +28,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
       throw new TypeError(`Types for Data must be an Array: ${datatypes}`);
     }
     if (sequenceKeys && !(Array.isArray(sequenceKeys) && (sequenceKeys.length === datatypes.length))) {
-      throw new TypeError(`Keys for Data must be an Array and equal by lngth to Datatypes: ${sequenceKeys}`);
+      throw new TypeError(`Keys for Data must be an Array and equal by length to Datatypes: ${datatypes}. Got: ${sequenceKeys}`);
     }
     byteLength = 0;
     byteOrder = [0];
@@ -94,13 +94,13 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     if (v && !(ArrayBuffer.isView(v) || v.byteLength)) {
       throw new TypeError(`View must a view or a buffer`);
     }
-    if (o !== undefined && (o + byteLength > (v.byteLength || b))) {
-      throw new TypeError(`Buffer is smaller than the given sequence`);
-    }
     byteOffset = 0;
-    b = b || byteLength;
+    b = b || (v && v.byteLength) || byteLength;
     o = o || 0;
-    return !v ? (dataview !== undefined ? dataview : ( dataview = new DataView( new ArrayBuffer( b ), o ) )) : (v.buffer ? (dataview = new DataView(v.buffer, o, b)) : (dataview = new DataView(v, o, b)));
+    if (o + byteLength > b) {
+      throw new RangeError(`Buffer is smaller than the given sequence. Expected ${b}, got ${o + byteLength}`);
+    }
+    return (v === undefined) ? (dataview !== undefined ? dataview : ( dataview = new DataView( new ArrayBuffer( b ), o ) )) : (v.buffer ? (dataview = new DataView(v.buffer, o)) : (dataview = new DataView(v, o)));
   };
 
   /**
@@ -137,7 +137,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
   var get = function() {};
 
   init(datatypes, keys);
-  if (o !== undefined || b !== undefined) {
+  if (!(dataview === undefined && o === undefined && b === undefined)) {
     view(dataview, o, b);
   }
 

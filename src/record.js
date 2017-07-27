@@ -19,6 +19,10 @@ export default function record() {
     return arguments.length === 0 ? _sequence : (_sequence = sequence(...arguments));
   };
 
+  const view = function() {
+    return _sequence === undefined ? (init(...arguments),_sequence.dataview(...arguments)) : (_sequence.dataview(...arguments));
+  };
+
   /**
    * [description]
    * @method
@@ -77,8 +81,8 @@ export default function record() {
   init(...arguments);
 
   return {
-    sequence: init,
-    dataview: _sequence.view,
+    init: init,
+    dataview: view,
     split: split,
     join: join,
     transpose: transpose,

@@ -26,7 +26,7 @@ describe('record: set parameters', function() {
     var keys2 = ['a', 'b', 'c'];
     var r = record(types, keys);
     expect(function() {
-      r.sequence(types2, keys2);
+      r.init(types2, keys2);
       done();
     }).to.not.throw();
   });
@@ -73,12 +73,32 @@ describe('record: set parameters', function() {
       done();
     }).to.not.throw();
   });
+  it('should accept another view after initialisation', function(done) {
+    var types = ['bool'];
+    var view = new DataView( new ArrayBuffer(8));
+    var view2 = new DataView( new ArrayBuffer(10));
+    expect(function() {
+      var r = record(types, null, view);
+      r.dataview(view2);
+      done();
+    }).to.not.throw();
+  });
   it('should accept a buffer', function(done) {
     var types = ['bool'];
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var r = record(types);
       r.dataview(buffer);
+      done();
+    }).to.not.throw();
+  });
+  it('should accept another buffer after initialisation', function(done) {
+    var types = ['bool'];
+    var buffer = new ArrayBuffer(8);
+    var buffer2 = new ArrayBuffer(10);
+    expect(function() {
+      var r = record(types, null, buffer);
+      r.dataview(buffer2);
       done();
     }).to.not.throw();
   });
@@ -91,19 +111,18 @@ describe('record: set parameters', function() {
       done();
     }).to.not.throw();
   });
-  it('should generate a view', function(done) {
+  it('should generate a view', function() {
     var types = ['bool'];
-    expect(function() {
-      var r = record(types);
-      r.dataview();
-      done();
-    }).to.not.throw();
+    var r = record(types);
+    var view = r.dataview();
+    expect(view.byteLength).to.exist;
+    expect(view.buffer).to.exist;
   });
   it('should accept a view with valid byteLength', function(done) {
     var types = ['float32', 'int16', 'int16'];
     var view = new DataView( new ArrayBuffer(8));
     expect(function() {
-      record(types, view);
+      record(types, null, view);
       done();
     }).to.not.throw();
   });
@@ -111,7 +130,7 @@ describe('record: set parameters', function() {
     var types = ['float32', 'int16', 'int16', 'bool'];
     var view = new DataView( new ArrayBuffer(8));
     expect(function() {
-      record(types, view);
+      record(types, null, view);
     }).to.throw();
   });
 });

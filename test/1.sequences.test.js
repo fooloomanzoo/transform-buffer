@@ -73,12 +73,32 @@ describe('sequence: set parameters', function() {
       done();
     }).to.not.throw();
   });
+  it('should accept another view after initialisation', function(done) {
+    var types = ['bool'];
+    var view = new DataView( new ArrayBuffer(8));
+    var view2 = new DataView( new ArrayBuffer(10));
+    expect(function() {
+      var s = sequence(types, null, view);
+      s.dataview(view2);
+      done();
+    }).to.not.throw();
+  });
   it('should accept a buffer', function(done) {
     var types = ['bool'];
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var s = sequence(types);
       s.dataview(buffer);
+      done();
+    }).to.not.throw();
+  });
+  it('should accept another buffer after initialisation', function(done) {
+    var types = ['bool'];
+    var buffer = new ArrayBuffer(8);
+    var buffer2 = new ArrayBuffer(10);
+    expect(function() {
+      var s = sequence(types, null, buffer);
+      s.dataview(buffer2);
       done();
     }).to.not.throw();
   });
@@ -94,7 +114,8 @@ describe('sequence: set parameters', function() {
   it('should generate a view', function() {
     var types = ['bool'];
     var s = sequence(types);
-    expect(s.dataview()).to.have.own.property('byteLength');
+    expect(s.dataview().byteLength).to.exist;
+    expect(s.dataview().buffer).to.exist;
   });
   it('should accept a view with valid byteLength', function(done) {
     var types = ['float32', 'int16', 'int16'];
