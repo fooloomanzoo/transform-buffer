@@ -20,7 +20,11 @@ export default function record() {
   };
 
   const view = function() {
-    return _sequence === undefined ? (init(...arguments),_sequence.dataview(...arguments)) : (_sequence.dataview(...arguments));
+    return _sequence === undefined ? (init(...arguments), _sequence.view(...arguments)) : (_sequence.view(...arguments));
+  };
+
+  const byteLength = function() {
+    return _sequence === undefined ? (init(...arguments), _sequence.byteLength(...arguments)) : (_sequence.byteLength(...arguments));
   };
 
   /**
@@ -61,20 +65,33 @@ export default function record() {
     return ret;
   };
 
-  const transpose = function() {
-    if (!arguments.length) return;
-
-    var buffer = new ArrayBuffer( arguments.length * this.sequenceByteLength );
-    const view = new DataView(buffer);
-    sequence.dataview(view);
-    for (var i = 0, offset = 0; i < arguments.length; i++, offset += this.sequenceByteLength) {
-      sequence.set(offset, record[i]);
+  // TODO: handle a stream?
+  const set = function(array, v, offset) {
+    if (!(array && array.length !== 0)) return;
+    if (v) {
+      view(v, offset);
+    } else {
+      view(new ArrayBuffer( array.length * _sequence.byteLength ), offset);
     }
-    return buffer;
+    for (var i = 0; i < array.length; i++) {
+      _sequence.set( array[i] );
+    }
+    // return view().buffer;
   };
 
-  const retrieve = function(buffer) {
-    return buffer;
+  // TODO: return a stream?
+  const get = function(offset, v) {
+    if (v !== undefined) {
+      view(v, offset);
+    } else if (offset !== undefined) {
+      _sequence.byteOffset( offset );
+    }
+    const array = [];
+    var value;
+    while ((value = _sequence.get()) !== undefined) {
+      array.push(value);
+    }
+    return array;
   };
 
 
@@ -82,10 +99,11 @@ export default function record() {
 
   return {
     init: init,
-    dataview: view,
+    view: view,
+    byteLength: byteLength,
+    set: set,
+    get: get,
     split: split,
-    join: join,
-    transpose: transpose,
-    retrieve: retrieve
+    join: join
   };
 }

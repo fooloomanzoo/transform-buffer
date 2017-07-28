@@ -69,7 +69,7 @@ describe('sequence: set parameters', function() {
     var view = new DataView( new ArrayBuffer(8));
     expect(function() {
       var s = sequence(types);
-      s.dataview(view);
+      s.view(view);
       done();
     }).to.not.throw();
   });
@@ -79,7 +79,7 @@ describe('sequence: set parameters', function() {
     var view2 = new DataView( new ArrayBuffer(10));
     expect(function() {
       var s = sequence(types, null, view);
-      s.dataview(view2);
+      s.view(view2);
       done();
     }).to.not.throw();
   });
@@ -88,7 +88,7 @@ describe('sequence: set parameters', function() {
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var s = sequence(types);
-      s.dataview(buffer);
+      s.view(buffer);
       done();
     }).to.not.throw();
   });
@@ -98,7 +98,7 @@ describe('sequence: set parameters', function() {
     var buffer2 = new ArrayBuffer(10);
     expect(function() {
       var s = sequence(types, null, buffer);
-      s.dataview(buffer2);
+      s.view(buffer2);
       done();
     }).to.not.throw();
   });
@@ -107,15 +107,15 @@ describe('sequence: set parameters', function() {
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var s = sequence(types);
-      s.dataview(buffer, 2);
+      s.view(buffer, 2);
       done();
     }).to.not.throw();
   });
   it('should generate a view', function() {
     var types = ['bool'];
     var s = sequence(types);
-    expect(s.dataview().byteLength).to.exist;
-    expect(s.dataview().buffer).to.exist;
+    expect(s.view().byteLength).to.exist;
+    expect(s.view().buffer).to.exist;
   });
   it('should accept a view with valid byteLength', function(done) {
     var types = ['float32', 'int16', 'int16'];
@@ -138,7 +138,7 @@ describe('sequence: set parameters', function() {
 describe('sequence: set and get data', function() {
   it('should set with given datatypes', function(done) {
     var s = sequence( ['bool', 'date', 'float32'] );
-    s.dataview();
+    s.view();
     expect(function() {
       s.set([true, new Date(), 3]);
       done();
@@ -146,7 +146,7 @@ describe('sequence: set and get data', function() {
   });
   it('should set with given datatypes at offset', function(done) {
     var s = sequence( ['bool', 'date', 'float32'] );
-    s.dataview(new ArrayBuffer(15), 2);
+    s.view(new ArrayBuffer(15), 2);
     expect(function() {
       s.set([true, new Date(), 3]);
       done();
@@ -154,7 +154,7 @@ describe('sequence: set and get data', function() {
   });
   it('should set with given datatypes and valid keys', function(done) {
     var s = sequence( ['bool', 'date', 'float32'], ['x', 'y', 'z'] );
-    s.dataview();
+    s.view();
     expect(function() {
       s.set({x: true, y: new Date(), z: 3});
       done();
@@ -162,7 +162,7 @@ describe('sequence: set and get data', function() {
   });
   it('should get with given datatypes', function(done) {
     var s = sequence( ['bool', 'date', 'float32']);
-    s.dataview();
+    s.view();
     s.set([true, new Date(), 3]);
     expect(function() {
       s.get(0);
@@ -171,7 +171,7 @@ describe('sequence: set and get data', function() {
   });
   it('should get with given datatypes at offset', function(done) {
     var s = sequence( ['bool', 'date', 'float32'] );
-    s.dataview(new ArrayBuffer(120), 2, 20);
+    s.view(new ArrayBuffer(120), 2, 20);
     s.set([true, new Date(), 3]);
     expect(function() {
       s.get(2);
@@ -180,7 +180,7 @@ describe('sequence: set and get data', function() {
   });
   it('should set and get with given datatypes and be equal', function(done) {
     var s = sequence( ['bool', 'date', 'float32']);
-    s.dataview();
+    s.view();
     var value = [true, new Date(), 3];
     s.set( value );
     var ret = s.get(0);
@@ -189,8 +189,20 @@ describe('sequence: set and get data', function() {
   });
   it('should set and get with given datatypes and keys and be equal', function(done) {
     var s = sequence( ['bool', 'date', 'float32'], ['x', 'y', 'z']);
-    s.dataview();
+    s.view();
     var value = {x: true, y: new Date(), z: 3};
+    s.set( value );
+    var ret = s.get(0);
+    expect(ret).to.deep.equal(value);
+    done();
+  });
+  it('should set and get after resetting view', function(done) {
+    var s = sequence( ['bool', 'date', 'float32'], ['x', 'y', 'z']);
+    s.view();
+    var value = {x: false, y: new Date(), z: 5};
+    s.set( value );
+    s.view(null);
+    value = {x: true, y: new Date(), z: 3};
     s.set( value );
     var ret = s.get(0);
     expect(ret).to.deep.equal(value);

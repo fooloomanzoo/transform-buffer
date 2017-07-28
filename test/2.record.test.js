@@ -69,7 +69,7 @@ describe('record: set parameters', function() {
     var view = new DataView( new ArrayBuffer(8));
     expect(function() {
       var r = record(types);
-      r.dataview(view);
+      r.view(view);
       done();
     }).to.not.throw();
   });
@@ -79,7 +79,7 @@ describe('record: set parameters', function() {
     var view2 = new DataView( new ArrayBuffer(10));
     expect(function() {
       var r = record(types, null, view);
-      r.dataview(view2);
+      r.view(view2);
       done();
     }).to.not.throw();
   });
@@ -88,7 +88,7 @@ describe('record: set parameters', function() {
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var r = record(types);
-      r.dataview(buffer);
+      r.view(buffer);
       done();
     }).to.not.throw();
   });
@@ -98,7 +98,7 @@ describe('record: set parameters', function() {
     var buffer2 = new ArrayBuffer(10);
     expect(function() {
       var r = record(types, null, buffer);
-      r.dataview(buffer2);
+      r.view(buffer2);
       done();
     }).to.not.throw();
   });
@@ -107,14 +107,14 @@ describe('record: set parameters', function() {
     var buffer = new ArrayBuffer(8);
     expect(function() {
       var r = record(types);
-      r.dataview(buffer, 2);
+      r.view(buffer, 2);
       done();
     }).to.not.throw();
   });
   it('should generate a view', function() {
     var types = ['bool'];
     var r = record(types);
-    var view = r.dataview();
+    var view = r.view();
     expect(view.byteLength).to.exist;
     expect(view.buffer).to.exist;
   });
@@ -136,43 +136,136 @@ describe('record: set parameters', function() {
 });
 
 
-// describe('record: set and get data', function() {
-//   it('should set with given datatypes', function(done) {
-//     var s = record( ['bool', 'date', 'float32'] );
-//     expect(function() {
-//       s.set([true, new Date(), 3]);
-//       done();
-//     }).to.not.throw();
-//   });
-//   it('should set with given datatypes and valid keys', function(done) {
-//     var s = record( ['bool', 'date', 'float32'], ['x', 'y', 'z'] );
-//     expect(function() {
-//       s.set({x: true, y: new Date(), z: 3});
-//       done();
-//     }).to.not.throw();
-//   });
-//   it('should get with given datatypes', function(done) {
-//     var s = record( ['bool', 'date', 'float32']);
-//     s.set([true, new Date(), 3]);
-//     expect(function() {
-//       s.get(0);
-//       done();
-//     }).to.not.throw();
-//   });
-//   it('should set and get with given datatypes and be equal', function(done) {
-//     var s = record( ['bool', 'date', 'float32']);
-//     var value = [true, new Date(), 3];
-//     s.set( value );
-//     var ret = s.get(0);
-//     expect(ret).to.deep.equal(value);
-//     done();
-//   });
-//   it('should set and get with given datatypes and keys and be equal', function(done) {
-//     var s = record( ['bool', 'date', 'float32'], ['x', 'y', 'z']);
-//     var value = {x: true, y: new Date(), z: 3};
-//     s.set( value );
-//     var ret = s.get(0);
-//     expect(ret).to.deep.equal(value);
-//     done();
-//   });
-// });
+describe('record: set and get data', function() {
+  it('should set with given datatypes', function(done) {
+    var r = record( ['bool', 'date', 'float32'] );
+    expect(function() {
+      r.set([[true, new Date(), 3], [true, new Date(), 3], [true, new Date(), 3]]);
+      done();
+    }).to.not.throw();
+  });
+  it('should set with given datatypes and valid keys', function(done) {
+    var r = record( ['bool', 'date', 'float32'], ['x', 'y', 'z'] );
+    expect(function() {
+      r.set([{x: true, y: new Date(), z: 3},{x: true, y: new Date(), z: 3}]);
+      done();
+    }).to.not.throw();
+  });
+  it('should get with given datatypes', function(done) {
+    var r = record( ['bool', 'date', 'float32']);
+    r.set([[true, new Date(), 3], [true, new Date(), 3], [true, new Date(), 3]]);
+    expect(function() {
+      r.get(0);
+      done();
+    }).to.not.throw();
+  });
+  it('should set and get with given datatypes and be equal', function(done) {
+    var r = record( ['bool', 'date', 'float32']);
+    var values = [[true, new Date(), 3]];
+    r.set( values );
+    var ret = r.get(0);
+    expect(ret).to.deep.equal(values);
+    done();
+  });
+  it('should set and get with given datatypes and keys and be equal', function(done) {
+    var r = record( ['bool', 'date', 'float32'], ['x', 'y', 'z']);
+    var values = [{x: true, y: new Date(), z: 3}, {x: true, y: new Date(), z: 3}];
+    r.set( values );
+    var ret = r.get(0);
+    expect(ret).to.deep.equal(values);
+    done();
+  });
+});
+
+describe('record: performance', function() {
+  const types = ['bool', 'date', 'float32'];
+  const r = record( types ), values = [];
+
+  it(`setting and getting array-like values (${types.length} variables)`, function(done) {
+    this.timeout(0);
+    let i = values.length, n, time_start, time_diff;
+    n = 1000;
+    while (i < n) {
+      let rdn = Math.random();
+      values.push([rdn < 0.5 ? false : true, new Date(), rdn * n]);
+      i++;
+    }
+    r.view(null, 0, r.byteLength * n);
+    time_start = process.hrtime();
+    r.set(values);
+    time_diff = process.hrtime(time_start);
+    console.log(`setting ${n}-values time elapsed: ${time_diff}s`);
+    time_start = process.hrtime();
+    const ret = r.get(0);
+    time_diff = process.hrtime(time_start);
+    console.log(`getting ${n}-values time elapsed: ${time_diff}s`);
+    done();
+  });
+
+  it(`setting and getting array-like values (${types.length} variables)`, function(done) {
+    this.timeout(0);
+    let i = values.length, n, time_start, time_diff;
+    n = 1000*1000;
+    while (i < n) {
+      let rdn = Math.random();
+      values.push([rdn < 0.5 ? false : true, new Date(), rdn * n]);
+      i++;
+    }
+    r.view(null, 0, r.byteLength * n);
+    time_start = process.hrtime();
+    r.set(values);
+    time_diff = process.hrtime(time_start);
+    console.log(`setting ${n}-values time elapsed: ${time_diff}s`);
+    time_start = process.hrtime();
+    const ret = r.get(0);
+    time_diff = process.hrtime(time_start);
+    console.log(`getting ${n}-values time elapsed: ${time_diff}s`);
+    done();
+  });
+
+  values.length = 0;
+  const keys = ['x', 'y', 'z'];
+  const r2 = record( types, keys ), values2 = [];
+  it(`setting and getting object-like values (${types.length} variables)`, function(done) {
+    this.timeout(0);
+    let i = values2.length, n, time_start, time_diff;
+    n = 1000;
+    while (i < n) {
+      let rdn = Math.random();
+      values2.push({x: rdn < 0.5 ? false : true, y: new Date(), z: rdn * n});
+      i++;
+    }
+    r2.view(null, 0, r.byteLength * n);
+    time_start = process.hrtime();
+    r2.set(values2);
+    time_diff = process.hrtime(time_start);
+    console.log(`setting ${n}-values time elapsed: ${time_diff}s`);
+    time_start = process.hrtime();
+    const ret = r2.get(0);
+    time_diff = process.hrtime(time_start);
+    console.log(`getting ${n}-values time elapsed: ${time_diff}s`);
+    done();
+  });
+
+  it(`setting and getting object-like values (${types.length} variables)`, function(done) {
+    this.timeout(0);
+    let i = values2.length, n, time_start, time_diff;
+    n = 1000*1000;
+    while (i < n) {
+      let rdn = Math.random();
+      values2.push({x: rdn < 0.5 ? false : true, y: new Date(), z: rdn * n});
+      i++;
+    }
+    r2.view(null, 0, r.byteLength * n);
+    time_start = process.hrtime();
+    r2.set(values2);
+    time_diff = process.hrtime(time_start);
+    console.log(`setting ${n}-values time elapsed: ${time_diff}s`);
+    time_start = process.hrtime();
+    const ret = r2.get(0);
+    time_diff = process.hrtime(time_start);
+    console.log(`getting ${n}-values time elapsed: ${time_diff}s`);
+    done();
+  });
+
+});

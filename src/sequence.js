@@ -9,7 +9,7 @@ import types from './types/index.js';
  */
 
 export default function sequence(datatypes, keys, dataview, o, b) {
-  var byteOrder,
+  let byteOrder,
     byteLength,
     byteOffset,
     getter,
@@ -36,8 +36,8 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     getter = [];
     setter = [];
     keys = [];
-    var type;
-    for (var i = 0; i < datatypes.length; i++) {
+    let type;
+    for (let i = 0; i < datatypes.length; i++) {
       if (datatypes[i] in types) {
         type = types[datatypes[i]]();
         byteLength += type.byteLength;
@@ -60,8 +60,9 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     if (handleAsArray === true) {
       get = function() {
         byteOffset = arguments[0] === undefined ? (byteOffset || 0) : arguments[0];
-        var ret = [];
-        for (var i = 0; i < getter.length; i++) {
+        if (byteOffset >= dataview.byteLength) return;
+        const ret = [];
+        for (let i = 0; i < getter.length; i++) {
           ret.push(getter[i](dataview, byteOffset + byteOrder[i]));
         }
         byteOffset += byteLength;
@@ -70,8 +71,9 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     } else {
       get = function() {
         byteOffset = arguments[0] === undefined ? (byteOffset || 0) : arguments[0];
-        var ret = {};
-        for (var i = 0; i < getter.length; i++) {
+        if (byteOffset >= dataview.byteLength) return;
+        const ret = {};
+        for (let i = 0; i < getter.length; i++) {
           ret[keys[i]] = getter[i](dataview, byteOffset + byteOrder[i]);
         }
         byteOffset += byteLength;
@@ -91,8 +93,8 @@ export default function sequence(datatypes, keys, dataview, o, b) {
    * @return {Object} [the dataview]
    */
   const view = function (v, o, b) {
-    if (v && !(ArrayBuffer.isView(v) || v.byteLength)) {
-      throw new TypeError(`View must a view or a buffer`);
+    if (v && !(ArrayBuffer.isView(v) || v.byteLength !== undefined)) {
+      throw new TypeError(`View must a view or a buffer. Got ${typeof v}, ${v}`);
     }
     byteOffset = 0;
     b = b || (v && v.byteLength) || byteLength;
@@ -100,7 +102,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     if (o + byteLength > b) {
       throw new RangeError(`Buffer is smaller than the given sequence. Expected ${b}, got ${o + byteLength}`);
     }
-    return (v === undefined) ? (dataview !== undefined ? dataview : ( dataview = new DataView( new ArrayBuffer( b ), o ) )) : (v.buffer ? (dataview = new DataView(v.buffer, o)) : (dataview = new DataView(v, o)));
+    return (!v) ? ((v === null || dataview === undefined) ? ( dataview = new DataView( new ArrayBuffer( b ), o ) ) : dataview) : (v.buffer ? (dataview = new DataView(v.buffer, o)) : (dataview = new DataView(v, o)));
   };
 
   /**
@@ -122,7 +124,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
  */
   const set = function(value) {
     byteOffset = arguments[1] === undefined ? (byteOffset || 0) : arguments[1];
-    for (var i = 0; i < setter.length; i++) {
+    for (let i = 0; i < setter.length; i++) {
       setter[i](dataview, byteOffset + byteOrder[i], value[keys[i]]);
     }
     byteOffset += byteLength;
@@ -137,6 +139,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
   var get = function() {};
 
   init(datatypes, keys);
+
   if (!(dataview === undefined && o === undefined && b === undefined)) {
     view(dataview, o, b);
   }
@@ -145,7 +148,7 @@ export default function sequence(datatypes, keys, dataview, o, b) {
     byteOrder: byteOrder,
     byteLength: byteLength,
     byteOffset: offset,
-    dataview: view,
+    view: view,
     getter: getter,
     setter: setter,
     handleAsArray: handleAsArray,
