@@ -6,7 +6,12 @@ import sequence from './sequence';
  * @param  {string[]} datatypes [Definition of types of data in the given values]
  * @param  {string[]} keys [if the value is an Object with specified keys this Array is used to get its properties. Same order like datatypes]
  */
-export default function record() {
+export default function record(dataview, options) {
+  if (options === undefined) {
+    options = dataview;
+    dataview = null;
+  }
+
   var _sequence;
 
 
